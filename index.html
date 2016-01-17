@@ -14,25 +14,34 @@
 </head>
 <body>
 <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.2.0/leaflet-omnivore.min.js'></script>
-
+<script src="lib/jquery-csv-0.71.js"></script>
 <div id='map'></div>
 
 <script>
-$.getJSON( "https://www.opendata.go.ke/api/views/5mtp-qs2h/rows.json", function(data){
-  var locations = data.meta.view.columns[10].cachedContents.top
-  var map = L.mapbox.map('map', 'mapbox.streets')
-      .setView([1, 36], 6)
-      // .featureLayer.setGeoJSON(geojson);
-  locations.forEach(function(element, index, array){
-    var marker = L.marker([element.item.latitude, element.item.longitude], {
-      icon: L.mapbox.marker.icon({
-          'marker-size': 'large',
-          'marker-color': '#fa0'
-      })
-    }).addTo(map);
-    marker.bindPopup()
-  });
 
+$.ajax({
+  type: "GET",
+  url: "http://localhost:8080/data/rows.csv",
+  dataType: "text",
+  success: function(data){
+    locations = $.csv.toObjects(data);
+    var map = L.mapbox.map('map', 'mapbox.streets')
+        .setView([1, 36], 6)
+    locations.forEach(function(element, index){
+      lat_long = element.Location2_Secondary.replace(/[()]/g, '').replace(/\s/g, '').split(',')
+      if(typeof lat_long[0] === 'undefined' || typeof lat_long[1] === 'undefined'){
+        console.log(element.EPGeoName + " does not have valid location data, skipping")
+      } else {
+        var marker = L.marker([lat_long[0], lat_long[1]], {
+          icon: L.mapbox.marker.icon({
+              'marker-size': 'large',
+              'marker-color': '#fa0'
+          })
+        }).addTo(map);
+        marker.bindPopup("yolo")
+      }
+    });
+  }
 });
 
 L.mapbox.accessToken = 'pk.eyJ1IjoiZ3JlZ2dhd2F0dCIsImEiOiJjaWppNGpzZm4wMnZxdHRtNWNuaHFsOWE5In0.XZJCOdDSALLBYWBt4bHmlw';
