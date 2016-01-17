@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Loading markers from CSV</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.mapbox.com/mapbox.js/v2.2.4/mapbox.js'></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+<link href='https://api.mapbox.com/mapbox.js/v2.2.4/mapbox.css' rel='stylesheet' />
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
+</head>
+<body>
+<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.2.0/leaflet-omnivore.min.js'></script>
+
+<div id='map'></div>
+
+<script>
+$.getJSON( "https://www.opendata.go.ke/api/views/5mtp-qs2h/rows.json", function(data){
+  var locations = data.meta.view.columns[10].cachedContents.top
+  var map = L.mapbox.map('map', 'mapbox.streets')
+      .setView([1, 36], 6)
+      // .featureLayer.setGeoJSON(geojson);
+  locations.forEach(function(element, index, array){
+    var marker = L.marker([element.item.latitude, element.item.longitude], {
+      icon: L.mapbox.marker.icon({
+          'marker-size': 'large',
+          'marker-color': '#fa0'
+      })
+    }).addTo(map);
+    marker.bindPopup()
+  });
+
+});
+
+L.mapbox.accessToken = 'pk.eyJ1IjoiZ3JlZ2dhd2F0dCIsImEiOiJjaWppNGpzZm4wMnZxdHRtNWNuaHFsOWE5In0.XZJCOdDSALLBYWBt4bHmlw';
+
+
+
+</script>
+</body>
+</html>
