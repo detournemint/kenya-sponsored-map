@@ -2,6 +2,8 @@ $(document).ready(function(){
   L.mapbox.accessToken = 'pk.eyJ1IjoiZ3JlZ2dhd2F0dCIsImEiOiJjaWppNGpzZm4wMnZxdHRtNWNuaHFsOWE5In0.XZJCOdDSALLBYWBt4bHmlw';
   var map = L.mapbox.map('map', 'mapbox.streets')
                     .setView([1, 36], 6)
+  var unclustered = L.mapbox.featureLayer();
+  var clustered = L.markerClusterGroup();
   var counties = ""
 
   var projectPerCounty = {}
@@ -71,33 +73,79 @@ $(document).ready(function(){
   }
 
 
-  $.ajax({
-    type: "GET",
-    url: "http://localhost:8080/data/rows.csv",
-    dataType: "text",
-    success: function(data){
-      locations = $.csv.toObjects(data);
-      var markerClusters = L.markerClusterGroup();
-      locations.forEach(function(element, index){
-        if(typeof projectPerCounty[element["County"]] === 'undefined'){
-          projectPerCounty[element["County"]] = 1
-        } else {
-          projectPerCounty[element["County"]] = 1 + projectPerCounty[element["County"]]
-        }
-        lat_long = element.Location2_Secondary.replace(/[()]/g, '').replace(/\s/g, '').split(',')
-        if(typeof lat_long[0] === 'undefined' || typeof lat_long[1] === 'undefined'){
-          console.log(element.EPGeoName + " does not have valid location data, skipping")
-        } else {
-          var marker = L.marker([lat_long[0], lat_long[1]], {
-            icon: myIcon
-          }).bindPopup(popUp(element))
-          markerClusters.addLayer(marker)
-        }
-      });
-      drawCounties()
-      map.legendControl.addLegend(getLegendHTML());
-      console.log(projectPerCounty)
-      map.addLayer(markerClusters)
+  function populateClusteredMap() {
+      $.ajax({
+      type: "GET",
+      url: "http://localhost:8080/data/rows.csv",
+      dataType: "text",
+      success: function(data){
+        projectPerCounty = {}
+        locations = $.csv.toObjects(data);
+        locations.forEach(function(element, index){
+          if(typeof projectPerCounty[element["County"]] === 'undefined'){
+            projectPerCounty[element["County"]] = 1
+          } else {
+            projectPerCounty[element["County"]] = 1 + projectPerCounty[element["County"]]
+          }
+          lat_long = element.Location2_Secondary.replace(/[()]/g, '').replace(/\s/g, '').split(',')
+          if(typeof lat_long[0] === 'undefined' || typeof lat_long[1] === 'undefined'){
+            console.log(element.EPGeoName + " does not have valid location data, skipping")
+          } else {
+            var marker = L.marker([lat_long[0], lat_long[1]], {
+              icon: myIcon
+            }).bindPopup(popUp(element))
+            clustered.addLayer(marker)
+          }
+        });
+        drawCounties()
+        map.legendControl.addLegend(getLegendHTML());
+        map.addLayer(clustered)
+      }
+    });
+  }
+
+  function populateUnclusteredMap() {
+      $.ajax({
+      type: "GET",
+      url: "http://localhost:8080/data/rows.csv",
+      dataType: "text",
+      success: function(data){
+        projectPerCounty = {}
+        locations = $.csv.toObjects(data);
+        locations.forEach(function(element, index){
+          if(typeof projectPerCounty[element["County"]] === 'undefined'){
+            projectPerCounty[element["County"]] = 1
+          } else {
+            projectPerCounty[element["County"]] = 1 + projectPerCounty[element["County"]]
+          }
+          lat_long = element.Location2_Secondary.replace(/[()]/g, '').replace(/\s/g, '').split(',')
+          if(typeof lat_long[0] === 'undefined' || typeof lat_long[1] === 'undefined'){
+            console.log(element.EPGeoName + " does not have valid location data, skipping")
+          } else {
+            var marker = L.marker([lat_long[0], lat_long[1]], {
+              icon: myIcon
+            }).bindPopup(popUp(element)).addTo(unclustered);
+          }
+        });
+        map.legendControl.addLegend(getLegendHTML());
+        map.addLayer(unclustered)
+        drawCounties()
+      }
+    });
+  }
+
+  $("#button").click(function(){
+    if(this.innerHTML == "Uncluster"){
+      populateUnclusteredMap()
+      map.removeLayer(clustered)
+      this.innerHTML = "Cluster"
+    } else {
+      populateClusteredMap()
+      map.removeLayer(unclustered)
+      this.innerHTML = "Uncluster"
     }
   });
+
+  populateClusteredMap()
+
 });
