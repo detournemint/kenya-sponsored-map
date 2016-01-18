@@ -11,7 +11,18 @@ $(document).ready(function(){
     "<b>Project Objectives:</b> " + element["Project Objectives"] + "</br></br>"
   }
 
-  var map = L.mapbox.map('map', 'mapbox.streets').setView([1, 36], 6)
+  var map = L.mapbox.map('map', 'mapbox.streets')
+                    .setView([1, 36], 6)
+  $.ajax({
+    type: "GET",
+    url: "http://localhost:8080/data/counties.geojson",
+    dataType: "text",
+    success: function(data){
+      counties = JSON.parse(data)
+      map.featureLayer.setGeoJSON(counties);
+    }
+  })
+
 
   $.ajax({
     type: "GET",
